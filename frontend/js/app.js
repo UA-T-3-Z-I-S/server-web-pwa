@@ -1,10 +1,11 @@
-// app.js
-import { saveSession, getSession, clearSession } from "./session.js";
-
 // ====================
 // CONFIG GLOBAL
 // ====================
-const API_BASE_URL = "http://localhost:3001"; // backend local
+const API_BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:3001"
+  : "https://server-web-pwa.onrender.com"; // tu URL de Render
+
+import { saveSession, getSession, clearSession } from "./session.js";
 
 // ====================
 // REDIRECCION SI YA HAY SESION
@@ -16,7 +17,6 @@ async function redirectToDashboardIfLogged() {
   }
 }
 
-// Ejecutar al cargar
 redirectToDashboardIfLogged();
 
 // ====================
