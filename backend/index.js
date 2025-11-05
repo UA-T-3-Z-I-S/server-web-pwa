@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Carpeta donde está el frontend
-const FRONTEND_DIR = path.join(__dirname, "../../Frontend");
+const FRONTEND_DIR = path.join(__dirname, "../../frontend");
 
 // Detecta si estamos corriendo en local o en Render
 const FRONTEND_URL = process.env.PORT
