@@ -30,16 +30,22 @@ app.get("/status", (req, res) => {
 app.use("/login", loginRouter);
 
 // Carpeta frontend
+// Ajusta según tu estructura
 const frontendPath = path.join(process.cwd(), "../frontend");
+
+// === LOG PARA VERIFICAR ===
+console.log("🚀 process.cwd():", process.cwd());
+console.log("🌐 Frontend path calculado:", frontendPath);
+
+// Servir archivos estáticos
 app.use(express.static(frontendPath));
 
-// SPA fallback eliminado para dashboard
+// SPA fallback
 app.get("*", (req, res) => {
-  // Excluye rutas API y archivos físicos
-  if (req.path.startsWith("/login") || req.path.startsWith("/status") || req.path.endsWith(".html") || req.path.endsWith(".css") || req.path.endsWith(".js")) {
+  if (req.path.startsWith("/login") || req.path.startsWith("/status") ||
+      req.path.endsWith(".html") || req.path.endsWith(".js") || req.path.endsWith(".css")) {
     return res.status(404).send("Not found");
   }
-  // Todo lo demás sirve index.html
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
