@@ -2,41 +2,27 @@ import { saveSession, getSession, clearSession } from "./session.js";
 
 const API_BASE_URL = window.location.origin;
 
-// Contenedor principal donde se cargará contenido dinámico
-const mainContainer = document.getElementById("main-container");
-
 // ====================
-// REDIRECCIÓN Y CARGA DE DASHBOARD
+// REDIRECCIÓN SI YA HAY SESIÓN
 // ====================
-async function initApp() {
+async function redirectToDashboardIfLogged() {
   const session = await getSession();
-
-  // Si hay sesión, carga dashboard
-  if (session) {
-    loadDashboard();
-    // Cambia URL sin recargar
-    window.history.replaceState({}, "", "/dashboard");
-  } else {
-    loadLogin();
-    window.history.replaceState({}, "", "/");
+  if (session && window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
+    // Redirige a dashboard.html físico
+    window.location.href = "./dashboard.html";
   }
 }
 
-// ====================
-// LOGIN VIEW
-// ====================
-function loadLogin() {
-  mainContainer.innerHTML = `
-    <h2>Login</h2>
-    <input id="dni-input" placeholder="DNI">
-    <input id="password-input" type="password" placeholder="Password">
-    <button id="login-btn">Ingresar</button>
-    <div id="login-error"></div>
-  `;
+// Lógica de login
+function setupLogin() {
+  const loginBtn = document.getElementById("login-btn");
+  const dniInput = document.getElementById("dni-input");
+  const passwordInput = document.getElementById("password-input");
+  const loginError = document.getElementById("login-error");
 
-  document.getElementById("login-btn").addEventListener("click", async () => {
-    const dni = document.getElementById("dni-input").value;
-    const password = document.getElementById("password-input").value;
+  loginBtn.addEventListener("click", async () => {
+    const dni = dniInput.value;
+    const password = passwordInput.value;
 
     try {
       const res = await fetch(`${API_BASE_URL}/login`, {
@@ -44,35 +30,18 @@ function loadLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dni, password })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (res.ok) {
         await saveSession(data);
-        loadDashboard();
-        window.history.replaceState({}, "", "/dashboard");
+        window.location.href = "./dashboard.html";
       } else {
-        document.getElementById("login-error").textContent = data.message || "Error";
+        loginError.textContent = data.message || "Error";
       }
     } catch (err) {
       console.error(err);
-      document.getElementById("login-error").textContent = "Error de conexión";
+      loginError.textContent = "Error de conexión";
     }
-  });
-}
-
-// ====================
-// DASHBOARD VIEW
-// ====================
-function loadDashboard() {
-  mainContainer.innerHTML = `
-    <h1>Bienvenido al Dashboard</h1>
-    <button id="logout-btn">Cerrar sesión</button>
-  `;
-
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    await clearSession();
-    loadLogin();
-    window.history.replaceState({}, "", "/");
   });
 }
 
@@ -86,6 +55,7 @@ if ("serviceWorker" in navigator) {
 }
 
 // Inicializa app
-initApp();
+redirectToDashboardIfLogged();
+setupLogin();
 
 export { API_BASE_URL, saveSession, getSession, clearSession };

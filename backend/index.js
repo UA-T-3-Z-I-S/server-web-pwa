@@ -33,10 +33,10 @@ app.use("/login", loginRouter);
 const frontendPath = path.join(process.cwd(), "../frontend");
 app.use(express.static(frontendPath));
 
-// SPA fallback
+// SPA fallback eliminado para dashboard
 app.get("*", (req, res) => {
-  // Excluye rutas API
-  if (req.path.startsWith("/login") || req.path.startsWith("/status")) {
+  // Excluye rutas API y archivos físicos
+  if (req.path.startsWith("/login") || req.path.startsWith("/status") || req.path.endsWith(".html") || req.path.endsWith(".css") || req.path.endsWith(".js")) {
     return res.status(404).send("Not found");
   }
   // Todo lo demás sirve index.html
