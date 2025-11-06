@@ -6,13 +6,13 @@ import loginRouter from "./routes/login.js";
 
 const app = express();
 
-// Detecta si estamos corriendo en Render o local
+// Detecta entorno
 const isRender = !!process.env.PORT;
 const FRONTEND_URL = isRender
   ? "https://server-web-pwa.onrender.com"
   : "http://localhost:3000";
 
-// CORS para API
+// CORS
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -26,19 +26,24 @@ app.get("/status", (req, res) => {
   res.json({ status: "ok", time: Date.now() });
 });
 
-// API Routes
+// Login API
 app.use("/login", loginRouter);
 
-// Servir frontend estático
+// Carpeta frontend
 const frontendPath = path.join(process.cwd(), "../frontend");
 app.use(express.static(frontendPath));
 
-// SPA fallback: cualquier ruta que no sea API sirve index.html
+// SPA fallback
 app.get("*", (req, res) => {
+  // Excluye rutas API
+  if (req.path.startsWith("/login") || req.path.startsWith("/status")) {
+    return res.status(404).send("Not found");
+  }
+  // Todo lo demás sirve index.html
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Puerto dinámico
+// Puerto
 const PORT = process.env.PORT || 3001;
 connectDB()
   .then(() => {
