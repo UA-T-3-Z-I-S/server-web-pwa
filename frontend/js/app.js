@@ -4,25 +4,46 @@ const API_BASE_URL = window.location.origin;
 
 // ====================
 // REDIRECCIÓN SI YA HAY SESIÓN
+// Solo se ejecuta en login (index.html o /)
 // ====================
 async function redirectToDashboardIfLogged() {
   const session = await getSession();
-  if (session && window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
-    // Redirige a dashboard.html físico
+
+  // Verifica que estamos en login (index.html o /)
+  const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/";
+
+  if (session && isLoginPage) {
+    // Redirige a dashboard físico
     window.location.href = "./dashboard.html";
   }
 }
 
-// Lógica de login
+// ====================
+// CONFIGURAR LOGIN
+// Solo ejecuta si estamos en login
+// ====================
 function setupLogin() {
+  const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/";
+  if (!isLoginPage) return; // no ejecutar en dashboard
+
   const loginBtn = document.getElementById("login-btn");
   const dniInput = document.getElementById("dni-input");
   const passwordInput = document.getElementById("password-input");
   const loginError = document.getElementById("login-error");
 
+  if (!loginBtn || !dniInput || !passwordInput || !loginError) {
+    console.error("Elementos de login no encontrados en DOM");
+    return;
+  }
+
   loginBtn.addEventListener("click", async () => {
-    const dni = dniInput.value;
-    const password = passwordInput.value;
+    const dni = dniInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!dni || !password) {
+      loginError.textContent = "Ingrese DNI y contraseña";
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/login`, {
@@ -32,11 +53,13 @@ function setupLogin() {
       });
 
       const data = await res.json();
+
       if (res.ok) {
         await saveSession(data);
+        // Redirige al dashboard físico
         window.location.href = "./dashboard.html";
       } else {
-        loginError.textContent = data.message || "Error";
+        loginError.textContent = data.message || "Error de login";
       }
     } catch (err) {
       console.error(err);
@@ -54,7 +77,9 @@ if ("serviceWorker" in navigator) {
     .catch(err => console.warn("SW error:", err));
 }
 
-// Inicializa app
+// ====================
+// INICIALIZACIÓN
+// ====================
 redirectToDashboardIfLogged();
 setupLogin();
 
