@@ -3,68 +3,68 @@ import { saveSession, getSession, clearSession } from "./session.js";
 const API_BASE_URL = window.location.origin;
 
 // ====================
-// REDIRECCIÓN SI YA HAY SESIÓN
-// Solo se ejecuta en login (index.html o /)
+// REDIRECCIÓN SEGÚN SESIÓN
 // ====================
-async function redirectToDashboardIfLogged() {
+async function redirectIfLogged() {
   const session = await getSession();
+  const path = window.location.pathname;
 
-  // Verifica que estamos en login (index.html o /)
-  const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/";
-
+  // Login page: si hay sesión, ir a dashboard
+  const isLoginPage = path === "/" || path.endsWith("index.html");
   if (session && isLoginPage) {
-    // Redirige a dashboard físico
-    window.location.href = "./dashboard.html";
+    window.location.href = "/dashboard"; // sin .html
+    return;
+  }
+
+  // Dashboard page: si no hay sesión, volver a login
+  const isDashboardPage = path === "/dashboard";
+  if (!session && isDashboardPage) {
+    window.location.href = "/";
+    return;
   }
 }
 
 // ====================
 // CONFIGURAR LOGIN
-// Solo ejecuta si estamos en login
 // ====================
 function setupLogin() {
-  const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/";
-  if (!isLoginPage) return; // no ejecutar en dashboard
+  const path = window.location.pathname;
+  const isLoginPage = path === "/" || path.endsWith("index.html");
+  if (!isLoginPage) return; // solo correr en login
 
-  const loginBtn = document.getElementById("login-btn");
-  const dniInput = document.getElementById("dni-input");
-  const passwordInput = document.getElementById("password-input");
-  const loginError = document.getElementById("login-error");
+  document.addEventListener("DOMContentLoaded", () => {
+    const loginBtn = document.getElementById("login-btn");
+    const dniInput = document.getElementById("dni-input");
+    const passwordInput = document.getElementById("password-input"); // opcional
+    const loginError = document.getElementById("login-error");
 
-  if (!loginBtn || !dniInput || !passwordInput || !loginError) {
-    console.error("Elementos de login no encontrados en DOM");
-    return;
-  }
-
-  loginBtn.addEventListener("click", async () => {
-    const dni = dniInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!dni || !password) {
-      loginError.textContent = "Ingrese DNI y contraseña";
+    if (!loginBtn || !dniInput || !loginError) {
+      console.warn("Elementos de login no encontrados en DOM, abortando setupLogin");
       return;
     }
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni, password })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        await saveSession(data);
-        // Redirige al dashboard físico
-        window.location.href = "./dashboard.html";
-      } else {
-        loginError.textContent = data.message || "Error de login";
+    loginBtn.addEventListener("click", async () => {
+      const dni = dniInput.value.trim();
+      if (!dni) {
+        loginError.textContent = "Ingrese DNI";
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      loginError.textContent = "Error de conexión";
-    }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dni })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Error de login");
+
+        await saveSession(data.user); // guardar en indexedDB
+        window.location.href = "/dashboard"; // redirige sin .html
+      } catch (err) {
+        loginError.textContent = err.message;
+      }
+    });
   });
 }
 
@@ -80,7 +80,7 @@ if ("serviceWorker" in navigator) {
 // ====================
 // INICIALIZACIÓN
 // ====================
-redirectToDashboardIfLogged();
+redirectIfLogged();
 setupLogin();
 
 export { API_BASE_URL, saveSession, getSession, clearSession };

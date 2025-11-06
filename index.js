@@ -1,56 +1,50 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import connectDB from "./src/db.js";
-import loginRouter from "./routes/login.js";
+import connectDB from "./backend/src/db.js";
+import loginRouter from "./backend/routes/login.js";
 
 const app = express();
-
-// Detecta entorno
+const PORT = process.env.PORT || 3001;
 const isRender = !!process.env.PORT;
 const FRONTEND_URL = isRender
   ? "https://server-web-pwa.onrender.com"
-  : "http://localhost:3000";
+  : `http://localhost:${PORT}`;
 
 // CORS
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type","Authorization"]
 }));
 
 app.use(express.json());
 
 // Healthcheck
-app.get("/status", (req, res) => {
-  res.json({ status: "ok", time: Date.now() });
-});
+app.get("/status", (req,res) => res.json({status:"ok",time:Date.now()}));
 
 // Login API
 app.use("/login", loginRouter);
 
 // Carpeta frontend
-// Ajusta según tu estructura
-const frontendPath = path.join(process.cwd(), "../frontend");
-
-// === LOG PARA VERIFICAR ===
+const frontendPath = path.join(process.cwd(),"frontend");
 console.log("🚀 process.cwd():", process.cwd());
-console.log("🌐 Frontend path calculado:", frontendPath);
+console.log("🌐 Frontend path:", frontendPath);
 
 // Servir archivos estáticos
 app.use(express.static(frontendPath));
 
-// SPA fallback
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/login") || req.path.startsWith("/status") ||
-      req.path.endsWith(".html") || req.path.endsWith(".js") || req.path.endsWith(".css")) {
-    return res.status(404).send("Not found");
-  }
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
+// === Rutas “limpias” sin .html ===
+// "/" → index.html
+app.get("/", (req,res) => res.sendFile(path.join(frontendPath,"index.html")));
 
-// Puerto
-const PORT = process.env.PORT || 3001;
+// "/dashboard" → dashboard.html
+app.get("/dashboard", (req,res) => res.sendFile(path.join(frontendPath,"dashboard.html")));
+
+// Todo lo demás → 404
+app.get("*", (req,res) => res.status(404).send("Not found"));
+
+// Conectar DB y arrancar servidor
 connectDB()
   .then(() => {
     app.listen(PORT, () => {
