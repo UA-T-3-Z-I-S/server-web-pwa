@@ -8,12 +8,14 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^4.21.0",
-    "mongodb": "^6.0.0",
+    "express": "^4.21.2",
+    "mongodb": "^6.20.0",
     "mongoose": "^8.19.3",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

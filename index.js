@@ -5,8 +5,9 @@ import connectDB from "./backend/src/db.js";
 import { connectMongoose } from "./backend/src/mongoose.js";
 import loginRouter from "./backend/routes/login.js";
 import usersRouter from "./backend/routes/users.js";
-import notsRouter from "./backend/routes/notifications.js"; // <- importar router de notificaciones
+import notsRouter from "./backend/routes/notifications.js";
 import formRouter from "./backend/routes/form.js";
+import pwaRouter from './backend/src/pwa.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -82,3 +83,16 @@ app.get("*", (req,res) => res.status(404).send("Not found"));
     console.error("❌ Error inicializando servidor:", err);
   }
 })();
+
+
+// ======================================
+// PWA SUBSCRIPTIONS
+// ======================================
+app.use("/pwa", (req, res, next) => {
+  // Evitar cache en estas rutas
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
+  next();
+}, pwaRouter);
