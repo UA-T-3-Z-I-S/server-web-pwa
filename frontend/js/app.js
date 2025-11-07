@@ -1,4 +1,6 @@
+// frontend/js/app.js
 import { saveSession, getSession, clearSession } from "./session.js";
+import { registerPush } from "./pwa_register.js";
 
 const API_BASE_URL = window.location.origin;
 
@@ -12,7 +14,7 @@ async function redirectIfLogged() {
   // Login page: si hay sesión, ir a dashboard
   const isLoginPage = path === "/" || path.endsWith("index.html");
   if (session && isLoginPage) {
-    window.location.href = "/dashboard"; // sin .html
+    window.location.href = "/dashboard";
     return;
   }
 
@@ -35,7 +37,6 @@ function setupLogin() {
   document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById("login-btn");
     const dniInput = document.getElementById("dni-input");
-    const passwordInput = document.getElementById("password-input"); // opcional
     const loginError = document.getElementById("login-error");
 
     if (!loginBtn || !dniInput || !loginError) {
@@ -50,6 +51,9 @@ function setupLogin() {
         return;
       }
 
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Validando...";
+
       try {
         const res = await fetch(`${API_BASE_URL}/login`, {
           method: "POST",
@@ -59,22 +63,40 @@ function setupLogin() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Error de login");
 
-        await saveSession(data.user); // guardar en indexedDB
-        window.location.href = "/dashboard"; // redirige sin .html
+        // Guardar sesión local
+        await saveSession(data.user);
+
+        // Redirigir al dashboard
+        window.location.href = "/dashboard";
       } catch (err) {
         loginError.textContent = err.message;
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Ingresar";
       }
     });
   });
 }
 
 // ====================
-// SERVICE WORKER
+// SERVICE WORKER + REGISTRO PWA
 // ====================
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js")
-    .then(() => console.log("✅ Service Worker registrado"))
-    .catch(err => console.warn("SW error:", err));
+async function setupServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register("./service-worker.js");
+      console.log("✅ Service Worker registrado");
+
+      // Si hay sesión activa, registrar PWA
+      const session = await getSession();
+      if (session) {
+        console.log("🟢 Usuario activo, registrando PWA...");
+        await registerPush(session._id, session.id);
+      }
+    } catch (err) {
+      console.warn("SW error:", err);
+    }
+  }
 }
 
 // ====================
@@ -82,5 +104,6 @@ if ("serviceWorker" in navigator) {
 // ====================
 redirectIfLogged();
 setupLogin();
+setupServiceWorker();
 
 export { API_BASE_URL, saveSession, getSession, clearSession };

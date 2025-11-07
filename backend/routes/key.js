@@ -1,4 +1,3 @@
-// backend/routes/key.js
 import express from 'express';
 const router = express.Router();
 

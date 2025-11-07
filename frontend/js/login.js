@@ -1,5 +1,4 @@
 import { API_BASE_URL, saveSession } from "./app.js";
-import { registerPush } from "./pwa_register.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginBtn = document.getElementById("login-btn");
@@ -28,12 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al validar");
 
+      // Guardar sesión local
       await saveSession(data.user);
 
-      // --- REGISTRO PWA ---
-      await registerPush(data.user._id);
-
-      window.location.href = "/dashboard"; // redirige sin .html
+      // Redirigir al dashboard
+      window.location.href = "/dashboard";
     } catch (err) {
       loginError.textContent = err.message;
     } finally {

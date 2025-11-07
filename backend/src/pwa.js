@@ -1,42 +1,46 @@
-// backend/src/pwa.js
 import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { ObjectId } from 'mongodb';
 import connectDB from './db.js';
 
 const router = express.Router();
 
 router.post('/subscribe', async (req, res) => {
+  console.log('📩 /pwa/subscribe llamado', req.body);
+
   try {
-    const { userMongoId, subscription } = req.body;
-    if (!userMongoId || !subscription) {
+    const { userMongoId, userId, subscription } = req.body;
+
+    if (!userMongoId || !userId || !subscription) {
       return res.status(400).json({ error: 'Faltan datos' });
     }
 
     const db = await connectDB();
     const pwaCollection = db.collection('pwa_dispositivos');
-    const usersCollection = db.collection('usuarios'); // tu colección de usuarios
+    const personalCollection = db.collection('personal_albergue');
 
-    // Crear registro del PWA
-    const userId = uuidv4();
-    const pwaDoc = {
-      userId,
-      userMongoId,
-      subscription,
-      created_at: new Date(),
-    };
-
-    const insertResult = await pwaCollection.insertOne(pwaDoc);
-    const pwaId = insertResult.insertedId;
-
-    // Actualizar array pwas en el usuario
-    await usersCollection.updateOne(
-      { _id: userMongoId },
-      { $addToSet: { pwas: pwaId } } // $addToSet evita duplicados
+    // Upsert en pwa_dispositivos
+    const result = await pwaCollection.updateOne(
+      { userMongoId },
+      { $set: { subscription, created_at: new Date(), userId } },
+      { upsert: true }
     );
 
+    // Obtener _id del PWA
+    const pwaDoc = await pwaCollection.findOne({ userMongoId });
+    const pwaId = pwaDoc._id;
+
+    // Actualizar personal_albergue agregando el PWA
+    // Convertimos userMongoId a ObjectId si _id es ObjectId
+    await personalCollection.updateOne(
+      { _id: new ObjectId(userMongoId) }, // O ajusta al campo que corresponda
+      { $addToSet: { pwas: pwaId } }
+    );
+
+    console.log(`🟢 PWA registrado/actualizado: ${pwaId} para usuario ${userMongoId}`);
     return res.status(200).json({ success: true, pwaId });
+
   } catch (err) {
-    console.error('Error guardando PWA:', err);
+    console.error('❌ Error guardando PWA:', err);
     return res.status(500).json({ error: 'Error interno' });
   }
 });

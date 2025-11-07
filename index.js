@@ -92,10 +92,11 @@ app.get("*", (req,res) => res.status(404).send("Not found"));
 // PWA SUBSCRIPTIONS
 // ======================================
 app.use("/pwa", (req, res, next) => {
-  // Evitar cache en estas rutas
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");
   res.set("Surrogate-Control", "no-store");
   next();
-}, pwaRouter);
+});
+
+app.use("/pwa", pwaRouter);
