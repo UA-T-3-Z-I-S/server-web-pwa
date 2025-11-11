@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache-v1';
+const CACHE_NAME = 'pwa-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -37,7 +37,6 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // HTML: network-first
   if (e.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
     e.respondWith(
       fetch(e.request)
@@ -47,34 +46,52 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Otros assets: cache-first
   e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
 });
 
-// 👇 Push notifications
-self.addEventListener('push', event => {
-  const data = event.data?.json();
-  if (!data) return;
+// ✅ Push notifications compatible con Android
+self.addEventListener("push", (event) => {
+  console.log("📩 [SW] Push recibido:", event.data?.text());
 
-  const title = data.title || 'Notificación';
-  const options = {
-    body: data.body || '',
-    icon: '/icons/icon-192.png',
-    data: data.data || {}
-  };
+  const data = event.data?.json() || {};
+  const title = data.title || "Nueva alerta";
+  const body = data.body || "Tienes una nueva notificación";
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      vibrate: [200, 100, 200],
+      actions: [
+        { action: "open", title: "Abrir 📲" }
+      ],
+      data: {
+        url: data.url || "/dashboard.html",
+        extra: data.data || {}
+      }
+    })
+  );
 });
 
-// Opcional: click en la notificación
-self.addEventListener('notificationclick', event => {
+// ✅ Manejo del click
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const url = event.notification.data?.url || "/";
+
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) return client.focus();
-      }
-      if (clients.openWindow) return clients.openWindow('/');
-    })
+    clients.matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(url) && "focus" in client) {
+            client.postMessage({
+              tipo: "notificacion",
+              data: event.notification.data?.extra
+            });
+            return client.focus();
+          }
+        }
+        return clients.openWindow(url);
+      })
   );
 });
