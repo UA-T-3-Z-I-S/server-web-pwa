@@ -98,4 +98,5 @@ export default async function startPushListener() {
   });
 }
 
-startPushListener().catch(err => console.error('❌ Error listener push:', err));
+// startPushListener().catch(err => console.error('❌ Error listener push:', err));
+
