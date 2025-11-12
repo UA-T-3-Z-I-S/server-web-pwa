@@ -1,4 +1,4 @@
-//backend/src/push.js
+// backend/src/push.js
 import connectDB from './db.js';
 import webpush from 'web-push';
 import dotenv from 'dotenv';
@@ -19,11 +19,23 @@ export default async function startPushListener() {
 
   console.log('🚀 Escuchando notificaciones_albergue...');
 
+  // 🧠 Cache para evitar procesar el mismo ID dos veces
+  const processed = new Set();
+
+  // Limpieza automática cada 10 minutos para evitar crecimiento del Set
+  setInterval(() => processed.clear(), 10 * 60 * 1000);
+
   const changeStream = notificacionesCol.watch([{ $match: { operationType: 'insert' } }]);
 
   changeStream.on('change', async (change) => {
+    const id = change.documentKey._id.toString();
+
+    // 🚫 Si ya se procesó este ID, no volver a enviarlo
+    if (processed.has(id)) return;
+    processed.add(id);
+
     const notif = change.fullDocument;
-    console.log('📌 Nuevo registro:', notif);
+    console.log('📌 Nuevo registro detectado:', notif);
 
     // Obtener personal activo
     const personal = await personalCol.find({ estado: true }).toArray();
@@ -57,7 +69,8 @@ export default async function startPushListener() {
 
       // Enviar push a todos los PWA del usuario
       const pwaDocs = await pwaCol.find({ _id: { $in: user.pwas } }).toArray();
-      console.log(`👀 ${user.nombre} tiene ${pwaDocs.length} PWA(s):`, pwaDocs.map(p => p._id)); // Comprobación de _id (MongoDB)
+      console.log(`👀 ${user.nombre} tiene ${pwaDocs.length} PWA(s):`, pwaDocs.map(p => p._id));
+
       for (const pwa of pwaDocs) {
         try {
           const payload = JSON.stringify({
@@ -70,12 +83,12 @@ export default async function startPushListener() {
               camara: notif.camara,
             }
           });
-          await webpush.sendNotification(pwa.subscription, payload,{
+
+          await webpush.sendNotification(pwa.subscription, payload, {
             TTL: 0,
-            headers:{
-              Urgency: 'high'
-            }
+            headers: { Urgency: 'high' }
           });
+
           console.log(`✅ Notificación enviada a ${user.nombre}`);
         } catch (err) {
           console.error(`❌ Error enviando notificación a ${user.nombre}:`, err);
@@ -86,6 +99,3 @@ export default async function startPushListener() {
 }
 
 startPushListener().catch(err => console.error('❌ Error listener push:', err));
-
-
-
