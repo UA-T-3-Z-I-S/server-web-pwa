@@ -84,7 +84,7 @@ function setupLogin() {
 async function setupServiceWorker() {
   if ("serviceWorker" in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js");
+      const registration = await navigator.serviceWorker.register("/service-worker.js");
       console.log("✅ Service Worker registrado");
 
       // Si hay sesión activa, registrar PWA

@@ -8,8 +8,8 @@ import usersRouter from "./backend/routes/users.js";
 import notsRouter from "./backend/routes/notifications.js";
 import keyRouter from "./backend/routes/key.js";
 import formRouter from "./backend/routes/form.js";
-import pwaRouter from './backend/src/pwa.js';
-import startPushListener from './backend/src/push.js';
+import pwaRouter from "./backend/src/pwa.js";
+import startPushListener from "./backend/src/push.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,7 +24,7 @@ const FRONTEND_URL = isRender
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
@@ -32,17 +32,17 @@ app.use(express.json());
 // =====================
 // HEALTHCHECK
 // =====================
-app.get("/status", (req,res) => res.json({status:"ok",time:Date.now()}));
+app.get("/status", (req, res) =>
+  res.json({ status: "ok", time: Date.now() })
+);
 
 // =====================
 // API ROUTES
 // =====================
-
-// Login y users
 app.use("/login", loginRouter);
 app.use("/users", usersRouter);
 
-// NO CACHE + Router /nots
+// No cache en notificaciones
 app.use("/nots", (req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.set("Pragma", "no-cache");
@@ -51,27 +51,42 @@ app.use("/nots", (req, res, next) => {
   next();
 }, notsRouter);
 
-// Form
 app.use("/form", formRouter);
-
 app.use("/key", keyRouter);
 
 // =====================
-// FRONTEND
+// PWA ROUTES (mover antes del listen ✅)
 // =====================
-const frontendPath = path.join(process.cwd(),"frontend");
+app.use("/pwa", (req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
+  next();
+});
+app.use("/pwa", pwaRouter);
+
+// =====================
+// FRONTEND STATIC FILES
+// =====================
+const frontendPath = path.join(process.cwd(), "frontend");
 console.log("🚀 process.cwd():", process.cwd());
 console.log("🌐 Frontend path:", frontendPath);
 
 app.use(express.static(frontendPath));
 
-app.get("/", (req,res) => res.sendFile(path.join(frontendPath,"index.html")));
-app.get("/dashboard", (req,res) => res.sendFile(path.join(frontendPath,"dashboard.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(frontendPath, "index.html"))
+);
+app.get("/dashboard", (req, res) =>
+  res.sendFile(path.join(frontendPath, "dashboard.html"))
+);
 
-app.get("*", (req,res) => res.status(404).send("Not found"));
+// 404 fallback
+app.get("*", (req, res) => res.status(404).send("Not found"));
 
 // =====================
-// INICIALIZACIÓN DE BASES
+// INITIALIZATION
 // =====================
 (async () => {
   try {
@@ -84,23 +99,11 @@ app.get("*", (req,res) => res.status(404).send("Not found"));
       console.log(`🌐 URL pública: ${FRONTEND_URL}`);
     });
 
-    startPushListener().catch(err => console.error('❌ Error listener push:', err));
-  
+    // Inicia listener de push
+    startPushListener().catch(err =>
+      console.error("❌ Error listener push:", err)
+    );
   } catch (err) {
     console.error("❌ Error inicializando servidor:", err);
   }
 })();
-
-
-// ======================================
-// PWA SUBSCRIPTIONS
-// ======================================
-app.use("/pwa", (req, res, next) => {
-  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-  res.set("Pragma", "no-cache");
-  res.set("Expires", "0");
-  res.set("Surrogate-Control", "no-store");
-  next();
-});
-
-app.use("/pwa", pwaRouter);
