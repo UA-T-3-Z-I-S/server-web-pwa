@@ -9,26 +9,34 @@
 <link rel="stylesheet" href="./styles/notifications.css">
 <link rel="stylesheet" href="./styles/form.css">
 <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
 </head>
 <body>
 
-<!-- Topbar -->
 <header id="topbar">
   <h1>PWA-Albergue</h1>
   <button id="logout-btn">Cerrar Sesión</button>
 </header>
 
-<!-- Contenido principal -->
 <main id="main-content">
   <p>Notificaciones</p>
-  <div id="notifications-container">
-    <!-- Cards se agregan aquí -->
-  </div>
+  <div id="notifications-container"></div>
 </main>
 
 <script type="module" src="./js/dashboard.js"></script>
 <script type="module" src="./js/notifications.js"></script>
 
+<!-- 🚀 Registro obligatorio del SW -->
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/service-worker.js", { updateViaCache: "none" })
+      .then(reg => {
+        console.log("✔ [PWA] SW registrado:", reg);
+        reg.update();
+      })
+      .catch(err => console.error("❌ [PWA] Error registrando SW:", err));
+  }
+</script>
 
 </body>
 </html>

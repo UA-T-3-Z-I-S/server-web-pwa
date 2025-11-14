@@ -28,7 +28,7 @@ function swLog(msg, extra = {}) {
 // =======================================================
 // CONFIG CACHE
 // =======================================================
-const CACHE_NAME = 'pwa-cache-v4'; // ← 🔥 NUEVA VERSION
+const CACHE_NAME = 'pwa-cache-v5'; // ← 🔥 NUEVA VERSION
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -138,7 +138,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body,
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      badge: "/icons/favicon.ico",
       vibrate: [200, 100, 200],
       actions: [{ action: "open", title: "Abrir 📲" }],
       data: {

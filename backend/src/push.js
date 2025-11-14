@@ -86,7 +86,9 @@ export default async function startPushListener() {
 
           await webpush.sendNotification(pwa.subscription, payload, {
             TTL: 0,
-            headers: { Urgency: 'high' }
+            urgency: "high",
+            vibrate: true,
+            headers: { urgency: 'high' }
           });
 
           console.log(`✅ Notificación enviada a ${user.nombre}`);

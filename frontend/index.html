@@ -4,9 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PWA Sistema de Albergue</title>
+
   <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
   <link rel="stylesheet" href="./styles/main.css">
   <link rel="manifest" href="manifest.json">
+
+  <!-- Obligatorio para Chrome: define el theme-color -->
+  <meta name="theme-color" content="#ffffff">
 </head>
 <body>
   <div id="login-container">
@@ -19,10 +23,6 @@
         maxlength="8" 
         pattern="\d{8}" 
         inputmode="numeric"
-        autocomplete="off" 
-        spellcheck="false" 
-        autocorrect="off" 
-        autocapitalize="off"
         required
       >
       <button type="button" id="login-btn">Ingresar</button>
@@ -33,5 +33,17 @@
   <!-- Scripts -->
   <script type="module" src="./js/app.js"></script>
   <script type="module" src="./js/login.js"></script>
+
+  <!-- 🚀 Registrar SW -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js", { updateViaCache: "none" })
+        .then(reg => {
+          console.log("✔ SW registrado:", reg);
+          reg.update(); // fuerza actualización
+        })
+        .catch(err => console.error("❌ Error registrando SW:", err));
+    }
+  </script>
 </body>
 </html>
