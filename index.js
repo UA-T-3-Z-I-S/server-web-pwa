@@ -88,6 +88,11 @@ app.get("/dashboard", (req, res) =>
 // 404 fallback
 app.get("*", (req, res) => res.status(404).send("Not found"));
 
+app.post("/sw-log", (req, res) => {
+  console.log("📡 [SW LOG]", req.body);
+  res.json({ ok: true });
+});
+
 // =====================
 // INITIALIZATION
 // =====================
