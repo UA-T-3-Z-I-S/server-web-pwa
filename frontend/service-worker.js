@@ -137,7 +137,7 @@ self.addEventListener("push", (event) => {
       body,
       icon: "/frontend/icons/icon-192.png",
       badge: "/frontend/icons/favicon.ico",
-      vibrate: [200, 100, 200],
+      vibrate: data.vibrate,
       actions: [{ action: "open", title: "Abrir 📲" }],
       data: {
         url: data.url || "/frontend/dashboard.html",

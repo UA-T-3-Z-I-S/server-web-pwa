@@ -77,6 +77,7 @@ export default async function startPushListener() {
             title: '🔔 Alerta de caída',
             body: `Evento: ${notif.evento}, Cámara: ${notif.camara}`,
             url: '/dashboard.html',
+            vibrate: [200, 100, 200],
             data: { 
               id: notif._id,
               evento: notif.evento,
@@ -87,7 +88,6 @@ export default async function startPushListener() {
           await webpush.sendNotification(pwa.subscription, payload, {
             TTL: 0,
             urgency: "high",
-            vibrate: true,
             headers: { urgency: 'high' }
           });
 
